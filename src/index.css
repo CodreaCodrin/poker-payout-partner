@@ -8,35 +8,44 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark poker theme — green felt + gold accents */
+    --background: 150 25% 7%;
+    --foreground: 45 25% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 150 22% 11%;
+    --card-foreground: 45 25% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 150 22% 11%;
+    --popover-foreground: 45 25% 95%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 142 70% 45%;
+    --primary-foreground: 150 30% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 150 18% 16%;
+    --secondary-foreground: 45 25% 95%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 150 15% 18%;
+    --muted-foreground: 150 10% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 45 90% 55%;
+    --accent-foreground: 150 30% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --success: 142 70% 45%;
+    --loss: 0 75% 60%;
 
-    --radius: 0.5rem;
+    --border: 150 18% 20%;
+    --input: 150 18% 20%;
+    --ring: 142 70% 45%;
+
+    --radius: 0.85rem;
+
+    --gradient-felt: radial-gradient(ellipse at top, hsl(150 30% 14%), hsl(150 30% 6%));
+    --gradient-gold: linear-gradient(135deg, hsl(45 90% 55%), hsl(35 85% 50%));
+    --shadow-card: 0 8px 24px -8px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 24px hsl(142 70% 45% / 0.4);
 
     --sidebar-background: 0 0% 98%;
 
