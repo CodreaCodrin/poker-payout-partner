@@ -15,7 +15,7 @@ const Index = () => {
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight">Poker Pot</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Track buy-ins & split pots — no chips needed.
+            App for professional miel.
           </p>
         </div>
 
@@ -47,9 +47,16 @@ const Index = () => {
           </Link>
         </div>
 
-        <p className="mt-auto pt-12 text-center text-xs text-muted-foreground">
-          Built for the felt. Mobile-first.
-        </p>
+        <div className="mt-auto pt-16 flex flex-col items-center gap-2">
+          <img 
+            src="/Coffin.png" 
+            alt="Miel Icon" 
+            className="w-full max-w-[150px] aspect-square object-cover" 
+          />
+          <p className="text-center text-xs text-muted-foreground">
+            Miel Love
+          </p>
+        </div>
       </div>
     </AppShell>
   );
