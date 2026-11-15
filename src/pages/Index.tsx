@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { Spade, History as HistoryIcon, Plus } from "lucide-react";
 import { AppShell } from "@/components/poker/AppShell";
+import { loadActiveGame } from "@/lib/poker";
 
 const Index = () => {
+  let hasActive = false;
+  try { hasActive = !!loadActiveGame(); } catch { hasActive = true; }
   return (
     <AppShell>
       <div className="flex min-h-[90vh] flex-col">
@@ -21,14 +24,14 @@ const Index = () => {
 
         <div className="mt-12 flex flex-col gap-4">
           <Link
-            to="/new"
+            to={hasActive ? "/game" : "/new"}
             className="group flex items-center justify-between rounded-2xl bg-primary px-6 py-6 text-primary-foreground shadow-[var(--shadow-card)] transition active:scale-[0.98]"
           >
             <div className="text-left">
               <div className="text-xs font-semibold uppercase tracking-widest opacity-80">
                 Start
               </div>
-              <div className="text-2xl font-bold">New Game</div>
+              <div className="text-2xl font-bold">{hasActive ? "Continuă jocul" : "New Game"}</div>
             </div>
             <Plus className="h-7 w-7" strokeWidth={2.5} />
           </Link>

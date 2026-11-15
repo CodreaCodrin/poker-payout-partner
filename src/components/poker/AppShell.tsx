@@ -5,7 +5,7 @@ export const AppShell = ({ children }: { children: ReactNode }) => (
     className="min-h-screen text-foreground"
     style={{ background: "var(--gradient-felt)" }}
   >
-    <div className="mx-auto w-full max-w-md px-4 py-6">{children}</div>
+    <div className="app-content mx-auto w-full max-w-md px-4 py-6">{children}</div>
   </div>
 );
 

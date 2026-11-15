@@ -76,7 +76,7 @@ const History = () => {
                       {formatDate(g.date)}
                     </div>
                     <div className="text-base font-bold">
-                      Buy-in {g.buyIn} · {g.players.length} players · {g.rounds.length} rounds
+                      {g.betting ? `Ante ${g.buyIn}` : `Buy-in ${g.buyIn}`} · {g.players.length} players · {g.rounds.length} rounds
                     </div>
                   </div>
                 </button>

@@ -1,164 +1,114 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, Play } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Play, ArrowUp, ArrowDown } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/poker/AppShell";
-import { Game, Player } from "@/lib/poker";
+import { Game, loadActiveGame, storeActiveGame } from "@/lib/poker";
+import { BlindMode, parseMoney } from "@/lib/betting";
 
-type Row = { name: string; initial: string };
+const inputClass = "min-w-0 w-full rounded-xl border border-border bg-secondary px-3 py-3 outline-none focus:border-primary";
 
 const NewGame = () => {
   const navigate = useNavigate();
-  const [buyIn, setBuyIn] = useState<string>("10");
-  const [rows, setRows] = useState<Row[]>([
-    { name: "", initial: "" },
-    { name: "", initial: "" },
-  ]);
-
+  const [ante, setAnte] = useState("0");
+  const [blindMode, setBlindMode] = useState<BlindMode>("both");
+  const [small, setSmall] = useState("5");
+  const [big, setBig] = useState("10");
+  const [dealerIndex, setDealerIndex] = useState(0);
+  const [rows, setRows] = useState([{ name: "", initial: "" }, { name: "", initial: "" }]);
   const initials = rows.map((r) => r.initial.trim().toUpperCase());
-  const duplicateInitials = useMemo(() => {
-    const seen = new Set<string>();
-    const dup = new Set<string>();
-    for (const i of initials) {
-      if (!i) continue;
-      if (seen.has(i)) dup.add(i);
-      seen.add(i);
-    }
-    return dup;
-  }, [initials]);
+  const duplicates = initials.filter((p, i) => p && initials.indexOf(p) !== i);
+  const anteValue = parseMoney(ante);
+  const smallValue = parseMoney(small);
+  const bigValue = parseMoney(big);
+  const valid = rows.length >= 2 && rows.every((r) => r.name.trim() && /^[A-Z]$/.test(r.initial)) && !duplicates.length &&
+    anteValue !== null && (blindMode === "none" || bigValue !== null && bigValue > 0) &&
+    (blindMode !== "both" || smallValue !== null && smallValue > 0 && smallValue < bigValue);
 
-  const buyInNum = Number(buyIn);
-  const buyInValid = Number.isFinite(buyInNum) && buyInNum > 0;
-  const allRowsValid =
-    rows.length >= 2 &&
-    rows.every((r) => r.name.trim() && /^[A-Za-z]$/.test(r.initial.trim()));
-  const canStart = buyInValid && allRowsValid && duplicateInitials.size === 0;
-
-  const update = (i: number, patch: Partial<Row>) => {
-    setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const update = (index: number, patch: Partial<(typeof rows)[number]>) =>
+    setRows(rows.map((row, i) => i === index ? { ...row, ...patch } : row));
+  const move = (index: number, direction: number) => {
+    const next = [...rows];
+    [next[index], next[index + direction]] = [next[index + direction], next[index]];
+    setRows(next);
+    if (dealerIndex === index) setDealerIndex(index + direction);
+    else if (dealerIndex === index + direction) setDealerIndex(index);
+  };
+  const remove = (index: number) => {
+    setRows(rows.filter((_, i) => i !== index));
+    setDealerIndex(dealerIndex === index ? 0 : dealerIndex > index ? dealerIndex - 1 : dealerIndex);
   };
 
-  const addRow = () => setRows((rs) => [...rs, { name: "", initial: "" }]);
-  const removeRow = (i: number) =>
-    setRows((rs) => (rs.length <= 1 ? rs : rs.filter((_, idx) => idx !== i)));
-
   const start = () => {
-    if (!canStart) return;
-    const players: Player[] = rows.map((r) => ({
-      name: r.name.trim(),
-      initial: r.initial.trim().toUpperCase(),
-    }));
-    const game: Game = {
-      id: crypto.randomUUID(),
-      date: Date.now(),
-      buyIn: buyInNum,
-      players,
-      rounds: [],
-    };
-    sessionStorage.setItem("poker-pot.active", JSON.stringify(game));
-    navigate("/game");
+    if (!valid) return;
+    try {
+      if (loadActiveGame()) {
+        toast.error("Există deja un joc activ. Finalizează-l înainte de a începe altul.");
+        navigate("/game");
+        return;
+      }
+      const game: Game = {
+        id: crypto.randomUUID(), date: Date.now(), buyIn: anteValue,
+        players: rows.map((r) => ({ name: r.name.trim(), initial: r.initial })), rounds: [],
+        betting: { blindMode, smallBlind: blindMode === "both" ? smallValue : 0,
+          bigBlind: blindMode === "none" ? 0 : bigValue, firstDealer: initials[dealerIndex] },
+      };
+      storeActiveGame(game);
+      navigate("/game");
+    } catch {
+      toast.error("Jocul nu a putut fi salvat. Verifică spațiul disponibil și accesul la stocare.");
+    }
   };
 
   return (
     <AppShell>
-      <PageHeader
-        title="New Game"
-        subtitle="Set buy-in & add players"
-        right={
-          <Link
-            to="/"
-            className="rounded-lg p-2 text-muted-foreground hover:text-foreground"
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        }
-      />
-
-      <section className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
-        <label className="block text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Buy-in
+      <PageHeader title="Joc nou" subtitle="Așază jucătorii în ordinea de la masă" right={<Link to="/" aria-label="Înapoi" className="p-2"><ArrowLeft /></Link>} />
+      <p className="mb-4 text-sm text-muted-foreground">Urmărește pariurile și plățile, cu cărțile la masa reală. All-in și poturile secundare nu sunt gestionate.</p>
+      <section className="mb-6 space-y-4 rounded-2xl border border-border bg-card p-4">
+        <label className="block text-sm font-semibold">Cum jucați blind-urile?
+          <select aria-label="Blind-uri" value={blindMode} onChange={(e) => setBlindMode(e.target.value as BlindMode)} className={`${inputClass} mt-2`}>
+            <option value="both">Small blind + Big blind</option>
+            <option value="big">Doar Big blind</option>
+            <option value="none">Fără blind-uri</option>
+          </select>
         </label>
-        <div className="mt-2 flex items-center gap-3">
-          <input
-            inputMode="decimal"
-            value={buyIn}
-            onChange={(e) => setBuyIn(e.target.value)}
-            className={`w-full rounded-xl border-2 bg-secondary px-4 py-3 text-2xl font-bold text-foreground outline-none transition focus:border-primary ${
-              buyIn && !buyInValid ? "border-destructive" : "border-transparent"
-            }`}
-            placeholder="10"
-          />
+        <div className="grid grid-cols-2 gap-3">
+          {blindMode === "both" && <label className="text-sm">Small blind
+            <input aria-label="Small blind" inputMode="decimal" value={small} onChange={(e) => setSmall(e.target.value)} className={`${inputClass} mt-1`} />
+          </label>}
+          {blindMode !== "none" && <label className="text-sm">Big blind
+            <input aria-label="Big blind" inputMode="decimal" value={big} onChange={(e) => setBig(e.target.value)} className={`${inputClass} mt-1`} />
+          </label>}
         </div>
+        {blindMode === "both" && !(smallValue > 0 && bigValue > smallValue) && <p className="text-sm text-loss">Small blind trebuie să fie pozitiv și mai mic decât Big blind.</p>}
+        <label className="block text-sm">Ante / intrare fixă pe mână (opțional)
+          <input aria-label="Ante" inputMode="decimal" value={ante} onChange={(e) => setAnte(e.target.value)} className={`${inputClass} mt-1`} />
+        </label>
+        <p className="text-xs text-muted-foreground">Ante se adaugă pentru fiecare jucător, separat de blind-uri. Lasă 0 dacă plătiți doar blind-urile. Sumele acceptă cel mult două zecimale.</p>
       </section>
-
-      <section className="mb-6">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Players
-        </h2>
-        <div className="flex flex-col gap-3">
-          {rows.map((row, i) => {
-            const initialUpper = row.initial.trim().toUpperCase();
-            const isDup = initialUpper && duplicateInitials.has(initialUpper);
-            const isInvalidInitial =
-              row.initial.length > 0 && !/^[A-Za-z]$/.test(row.initial.trim());
-            const initialError = isDup || isInvalidInitial;
-            return (
-              <div
-                key={i}
-                className="flex items-center gap-2 rounded-2xl border border-border bg-card p-3 shadow-[var(--shadow-card)]"
-              >
-                <input
-                  value={row.initial}
-                  onChange={(e) =>
-                    update(i, { initial: e.target.value.slice(0, 1).toUpperCase() })
-                  }
-                  maxLength={1}
-                  placeholder="A"
-                  className={`h-12 w-12 rounded-xl border-2 bg-secondary text-center text-xl font-bold uppercase outline-none transition focus:border-primary ${
-                    initialError ? "border-destructive" : "border-transparent"
-                  }`}
-                  aria-label="Player initial"
-                />
-                <input
-                  value={row.name}
-                  onChange={(e) => update(i, { name: e.target.value })}
-                  placeholder="Name"
-                  className="h-12 flex-1 rounded-xl border-2 border-transparent bg-secondary px-3 text-base outline-none transition focus:border-primary"
-                />
-                <button
-                  onClick={() => removeRow(i)}
-                  disabled={rows.length <= 1}
-                  className="rounded-xl p-2 text-muted-foreground transition hover:text-destructive disabled:opacity-30"
-                  aria-label="Remove player"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </button>
+      <div className="mb-3 text-sm text-muted-foreground">Ordinea este în sensul acelor de ceasornic. Folosește săgețile pentru a schimba locurile.</div>
+      <div className="space-y-3">
+        {rows.map((row, i) => (
+          <section key={i} className="rounded-2xl border border-border bg-card p-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{i + 1}</span>
+              <input aria-label={`Inițiala jucătorului ${i + 1}`} value={row.initial} onChange={(e) => update(i, { initial: e.target.value.slice(0, 1).toUpperCase() })} maxLength={1} placeholder="A" className="h-12 w-12 shrink-0 rounded-xl border border-border bg-secondary text-center text-xl font-bold" />
+              <input aria-label={`Numele jucătorului ${i + 1}`} value={row.name} onChange={(e) => update(i, { name: e.target.value })} placeholder="Nume" className={inputClass} />
+              <button aria-label={`Elimină jucătorul ${i + 1}`} disabled={rows.length <= 2} onClick={() => remove(i)} className="shrink-0 p-2 text-muted-foreground disabled:opacity-30"><Trash2 className="h-4 w-4" /></button>
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <label className="flex items-center gap-2 text-sm"><input type="radio" name="dealer" checked={dealerIndex === i} onChange={() => setDealerIndex(i)} />Primul dealer</label>
+              <div className="flex gap-2">
+                <button aria-label={`Mută jucătorul ${i + 1} în sus`} disabled={i === 0} onClick={() => move(i, -1)} className="rounded-lg bg-secondary p-2 disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
+                <button aria-label={`Mută jucătorul ${i + 1} în jos`} disabled={i === rows.length - 1} onClick={() => move(i, 1)} className="rounded-lg bg-secondary p-2 disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
               </div>
-            );
-          })}
-        </div>
-
-        <button
-          onClick={addRow}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-transparent py-3 text-sm font-semibold text-muted-foreground transition hover:border-primary hover:text-primary"
-        >
-          <Plus className="h-4 w-4" /> Add player
-        </button>
-
-        {duplicateInitials.size > 0 && (
-          <p className="mt-3 text-sm text-destructive">
-            Initials must be unique.
-          </p>
-        )}
-      </section>
-
-      <button
-        onClick={start}
-        disabled={!canStart}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-lg font-bold text-primary-foreground shadow-[var(--shadow-glow)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
-      >
-        <Play className="h-5 w-5" /> Start Game
-      </button>
+            </div>
+          </section>
+        ))}
+      </div>
+      {duplicates.length > 0 && <p className="mt-2 text-sm text-loss">Inițialele trebuie să fie unice (A–Z).</p>}
+      <button onClick={() => setRows([...rows, { name: "", initial: "" }])} disabled={rows.length >= 26} className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-3 disabled:opacity-30"><Plus className="h-4 w-4" />Adaugă jucător</button>
+      <button onClick={start} disabled={!valid} className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-lg font-bold text-primary-foreground disabled:opacity-40"><Play className="h-5 w-5" />Începe jocul</button>
     </AppShell>
   );
 };
