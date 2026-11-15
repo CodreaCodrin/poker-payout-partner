@@ -123,6 +123,10 @@ Proiectul folosește Gradle **8.14.3** și Android Gradle Plugin **8.13.0**. Pă
 
 ## 8. Generează APK-ul
 
+**Pentru versiunea ta de utilizare, mergi direct la secțiunea 11: APK release semnat.** Pașii de mai jos sunt doar alternativa debug pentru testare.
+
+În interfața nouă Android Studio, meniurile pot fi ascunse în butonul **☰ din stânga sus**. Nu există neapărat un buton numit „Create APK”. Cu **Ctrl+Shift+A** cauți direct acțiunile, fără să depinzi de poziția meniurilor.
+
 Pentru primul APK de test pe telefon, folosește varianta **debug**:
 
 1. Deschide **View → Tool Windows → Build Variants**. Pentru modulul `app`, alege **debug**, dacă nu este deja selectat.
@@ -163,17 +167,17 @@ Aplicația poate fi folosită offline. Internetul este necesar pentru descărcar
 
 ## 10. Dacă ai deja o versiune instalată
 
-Actualizarea trebuie să păstreze identificatorul **com.example.app** și **aceeași cheie de semnare** ca APK-ul instalat. Versiunea curentă din proiect este `versionCode 2`, `versionName "1.1"`.
+Actualizarea trebuie să păstreze identificatorul **com.example.app** și **aceeași cheie de semnare** ca APK-ul instalat. Versiunea curentă din proiect este `versionCode 3`, `versionName "1.2"`.
 
 - Dacă aplicația veche era debug, noul APK debug trebuie semnat cu același debug keystore. Acesta este de regulă `%USERPROFILE%\.android\debug.keystore`. Reinstalarea Android Studio nu îl șterge de obicei; schimbarea PC-ului sau pierderea cheii poate împiedica actualizarea.
 - Dacă aplicația veche era release, folosește cheia și aliasul originale la generarea unui APK release, conform secțiunii următoare.
 - Dacă apare **App not installed / Package conflicts**, verifică semnătura și versiunea înainte de a dezinstala aplicația. Dezinstalarea șterge istoricul și jocul activ de pe telefon. O instalare compatibilă peste aplicația existentă păstrează de regulă datele.
 
-## 11. Opțional: APK release cu cheia ta, pentru folosire pe termen lung
+## 11. APK release semnat — varianta pentru folosirea ta pe termen lung
 
 APK-ul debug este suficient pentru prima verificare. Pentru o cheie pe care să o păstrezi și să o refolosești la actualizări:
 
-1. Alege **Build → Generate Signed App Bundle or APK**.
+1. Apasă **Ctrl+Shift+A**, scrie **Generate Signed** și selectează **Generate Signed App Bundle or APK…**, apoi Enter. Alternativ: **☰ → Build → Generate Signed App Bundle or APK**.
 2. Selectează **APK**, apoi **Next**.
 3. Dacă ai deja cheia cu care este semnată aplicația instalată, selecteaz-o cu **Choose existing** și introdu aliasul și parolele ei.
 4. Dacă este prima ta versiune release, apasă **Create new**. Alege locația unui fișier `.jks`, o parolă, un alias precum `pokerpay`, parola cheii și completează datele cerute. Folosește o valabilitate de cel puțin 25 de ani.
@@ -182,6 +186,8 @@ APK-ul debug este suficient pentru prima verificare. Pentru o cheie pe care să 
 7. Folosește **locate** pentru calea exactă a APK-ului semnat; asistentul poate folosi un folder diferit de cel pentru debug.
 
 Un APK release semnat cu o cheie nouă nu se instalează peste un APK debug cu altă semnătură. La fiecare versiune viitoare, crește `versionCode` în `android/app/build.gradle`, refolosește aceeași cheie release și repetă sincronizarea înainte de build.
+
+**Doar selectarea `release` în Build Variants nu generează și nu semnează APK-ul.** Asistentul de mai sus trebuie parcurs până la final. Comanda `assembleRelease` din proiectul actual, fără o configurare de semnare, produce un APK nesemnat; nu este un înlocuitor pentru asistentul de semnare.
 
 ## 12. Cum introduci ușor pariurile cu o singură mână
 
@@ -210,7 +216,7 @@ Fă o sesiune scurtă de probă pe telefon:
 6. Finalizează sesiunea și verifică **History**. Verifică și o mână cu trei jucători și split.
 7. Cu telefonul într-o mână, verifică accesul la Call, Fold, sumele rapide și confirmare, inclusiv cu navigarea Android prin gesturi sau trei butoane. Panoul nu trebuie să intre sub bara sistemului.
 
-Build-ul web, testele și sincronizarea Capacitor au fost executate în mediul de dezvoltare. Verificările în browser includ fluxul de joc și dimensiuni de telefon. **Build-ul Gradle și folosirea pe un telefon Android fizic nu sunt certificate aici**, deoarece Android Studio și SDK-ul nu sunt instalate în acest mediu. Pașii de mai sus verifică partea specifică telefonului tău.
+Build-ul web, testele și sincronizarea Capacitor au fost executate în mediul de dezvoltare. Verificările în browser includ fluxul de joc și dimensiuni de telefon. După instalarea Android Studio a fost confirmată și sincronizarea Gradle, iar asistentul APK release a fost deschis până la alegerea cheii de semnare. **Generarea APK-ului semnat și folosirea pe un telefon Android fizic rămân de verificat.** Pașii de mai sus verifică partea specifică telefonului tău.
 
 ## 14. După o modificare ulterioară: pașii scurți
 
